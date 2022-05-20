@@ -9,13 +9,10 @@ const lb = new awsx.lb.ApplicationLoadBalancer("nginx-lb", {
     },
 });
 
-const service = new awsx.ecs.FargateService("my-service", {
+const frontend = new awsx.ecs.FargateService("frontend-service", {
     cluster: cluster.arn,
     desiredCount: 1,
     taskDefinitionArgs: {
-        runtimePlatform: {
-            cpuArchitecture: "ARM64",
-        },
         containers: {
             frontend: {
                 image: "pulumi/tutorial-pulumi-fundamentals-frontend:latest",
@@ -29,6 +26,15 @@ const service = new awsx.ecs.FargateService("my-service", {
                     },
                 ],
             },
+        },
+    },
+});
+
+const backend = new awsx.ecs.FargateService("backend-service", {
+    cluster: cluster.arn,
+    desiredCount: 1,
+    taskDefinitionArgs: {
+        containers: {
             backend: {
                 image: "pulumi/tutorial-pulumi-fundamentals-backend:latest",
                 cpu: 512,
@@ -41,6 +47,18 @@ const service = new awsx.ecs.FargateService("my-service", {
                     },
                 ],
             },
+        },
+    },
+});
+
+const db = new awsx.ecs.FargateService("db-service", {
+    cluster: cluster.arn,
+    desiredCount: 1,
+    taskDefinitionArgs: {
+        runtimePlatform: {
+            cpuArchitecture: "ARM64",
+        },
+        containers: {
             mongo: {
                 image: "pulumi/tutorial-pulumi-fundamentals-database-local:latest",
                 cpu: 512,
