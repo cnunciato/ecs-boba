@@ -9,6 +9,12 @@ const lb = new awsx.lb.ApplicationLoadBalancer("nginx-lb", {
     },
 });
 
+const dblb = new awsx.lb.ApplicationLoadBalancer("db-lb", {
+    listener: {
+        port: 27017,
+    },
+});
+
 const frontend = new awsx.ecs.FargateService("frontend-service", {
     cluster: cluster.arn,
     desiredCount: 1,
@@ -40,6 +46,20 @@ const backend = new awsx.ecs.FargateService("backend-service", {
                 cpu: 512,
                 memory: 1024,
                 essential: true,
+                environment: [
+                    {
+                        "name": "DATABASE_HOST",
+                        "value": "mongodb://"+ dblb.loadBalancer.dnsName + ":27017",
+                    },
+                    {
+                        "name": "DATABASE_NAME",
+                        "value": "cart",
+                    },
+                    {
+                        "name": "NODE_ENV",
+                        "value": "development",
+                    },
+                ],
                 portMappings: [
                     {
                         containerPort: 3000,
@@ -67,12 +87,13 @@ const db = new awsx.ecs.FargateService("db-service", {
                 portMappings: [
                     {
                         containerPort: 27017,
-                        hostPort: 27017,
+                        targetGroup: dblb.defaultTargetGroup,
                     },
                 ],
             },
         },
     },
 });
+
 
 export const url = lb.loadBalancer.dnsName;
