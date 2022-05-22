@@ -1,5 +1,8 @@
 import * as aws from "@pulumi/aws";
 import * as awsx from "@pulumi/awsx";
+import * as pulumi from "@pulumi/pulumi";
+
+import { rootPulumiStackTypeName } from "@pulumi/pulumi/runtime";
 
 const cluster = new aws.ecs.Cluster("default-cluster");
 
@@ -49,7 +52,7 @@ const backend = new awsx.ecs.FargateService("backend-service", {
                 environment: [
                     {
                         "name": "DATABASE_HOST",
-                        "value": "mongodb://"+ dblb.loadBalancer.dnsName + ":27017",
+                        "value": pulumi.concat("mongodb://", dblb.loadBalancer.dnsName, ":27017"),
                     },
                     {
                         "name": "DATABASE_NAME",
@@ -97,3 +100,6 @@ const db = new awsx.ecs.FargateService("db-service", {
 
 
 export const url = lb.loadBalancer.dnsName;
+export const db_url= pulumi.concat("mongodb://", dblb.loadBalancer.dnsName, ":27017");
+
+
